@@ -37,6 +37,13 @@ def add_venda(data, cliente, vendedor, valor, marca_exclusiva, tipo_produto, mar
     except Exception as e:
         st.error(f"Erro ao adicionar venda: {e}")
 
+def delete_venda(id):
+    supabase = get_client()
+    try:
+        supabase.table("vendas").delete().eq("id", id).execute()
+    except Exception as e:
+        st.error(f"Erro ao excluir venda: {e}")
+
 def get_vendedores():
     supabase = get_client()
     try:
