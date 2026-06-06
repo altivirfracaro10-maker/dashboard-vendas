@@ -56,7 +56,7 @@ if aba == "📊 Dashboard":
             "marca_exclusiva", "tipo_produto", "margem"
         ]].copy()
         df_display.columns = [
-            "Data", "Cliente", "Valor Total", "Vendedor",
+            "Data", "Nome da Loja", "Valor Total", "Vendedor",
             "Marca Exclusiva", "Genérico/Similar", "Margem (%)"
         ]
         df_display["Marca Exclusiva"] = df_display["Marca Exclusiva"].map(
@@ -108,6 +108,17 @@ if aba == "📊 Dashboard":
             )
             st.plotly_chart(fig2, use_container_width=True)
 
+        # ── Gráfico por Loja ──
+        st.subheader("Vendas por Loja")
+        fig3 = px.bar(
+            df.groupby("cliente")["valor"].sum().reset_index(),
+            x="cliente", y="valor",
+            title="Vendas por Nome da Loja",
+            color="cliente",
+            labels={"cliente": "Nome da Loja", "valor": "Valor Total"}
+        )
+        st.plotly_chart(fig3, use_container_width=True)
+
 # ── ABA LANÇAR VENDA ───────────────────────
 elif aba == "➕ Lançar Venda":
     st.header("Lançar Nova Venda")
@@ -122,7 +133,11 @@ elif aba == "➕ Lançar Venda":
             col1, col2 = st.columns(2)
             with col1:
                 data = st.date_input("Data", value=datetime.today())
-                cliente = st.text_input("Cliente")
+                # ← ALTERADO: selectbox com as lojas
+                cliente = st.selectbox(
+                    "Nome da Loja",
+                    ["Xavier", "Campo Largo"]
+                )
                 vendedor = st.selectbox("Vendedor", nomes)
             with col2:
                 valor = st.number_input(
@@ -140,7 +155,7 @@ elif aba == "➕ Lançar Venda":
 
             submitted = st.form_submit_button("💾 Salvar Venda")
             if submitted:
-                if cliente and valor > 0:
+                if valor > 0:
                     add_venda(
                         str(data), cliente, vendedor,
                         valor, marca_exclusiva,
@@ -160,7 +175,24 @@ elif aba == "📋 Histórico":
         st.info("Nenhuma venda registrada ainda!")
     else:
         df = pd.DataFrame(vendas)
-        st.dataframe(df, use_container_width=True)
+
+        # Filtros
+        col1, col2 = st.columns(2)
+        with col1:
+            lojas = ["Todas"] + list(df["cliente"].unique())
+            loja_filtro = st.selectbox("Filtrar por Loja", lojas)
+        with col2:
+            vendedores_lista = ["Todos"] + list(df["vendedor"].unique())
+            vendedor_filtro = st.selectbox("Filtrar por Vendedor", vendedores_lista)
+
+        if loja_filtro != "Todas":
+            df = df[df["cliente"] == loja_filtro]
+        if vendedor_filtro != "Todos":
+            df = df[df["vendedor"] == vendedor_filtro]
+
+        df_display = df.copy()
+        df_display = df_display.rename(columns={"cliente": "Nome da Loja"})
+        st.dataframe(df_display, use_container_width=True)
 
         csv = df.to_csv(index=False).encode("utf-8")
         st.download_button(
