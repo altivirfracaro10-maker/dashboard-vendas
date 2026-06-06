@@ -8,7 +8,6 @@ def get_client() -> Client:
 
 def init_db():
     supabase = get_client()
-    # Testa a conexão
     try:
         supabase.table("vendas").select("id").limit(1).execute()
     except Exception as e:
@@ -17,20 +16,23 @@ def init_db():
 def get_vendas():
     supabase = get_client()
     try:
-        response = supabase.table("vendas").select("*").execute()
+        response = supabase.table("vendas").select("*").order("data", desc=True).execute()
         return response.data
     except Exception as e:
         st.error(f"Erro ao buscar vendas: {e}")
         return []
 
-def add_venda(vendedor, produto, valor, data):
+def add_venda(data, cliente, vendedor, valor, marca_exclusiva, tipo_produto, margem):
     supabase = get_client()
     try:
         supabase.table("vendas").insert({
+            "data": data,
+            "cliente": cliente,
             "vendedor": vendedor,
-            "produto": produto,
             "valor": valor,
-            "data": data
+            "marca_exclusiva": marca_exclusiva,
+            "tipo_produto": tipo_produto,
+            "margem": margem
         }).execute()
     except Exception as e:
         st.error(f"Erro ao adicionar venda: {e}")
@@ -47,8 +49,6 @@ def get_vendedores():
 def add_vendedor(nome):
     supabase = get_client()
     try:
-        supabase.table("vendedores").insert({
-            "nome": nome
-        }).execute()
+        supabase.table("vendedores").insert({"nome": nome}).execute()
     except Exception as e:
         st.error(f"Erro ao adicionar vendedor: {e}")
